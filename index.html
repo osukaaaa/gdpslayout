@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LayoutGDPS</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #07101f;
+      --surface: #0b1929;
+      --border: #1a2e4a;
+      --accent: #2563eb;
+      --accent-dim: #1d4ed8;
+      --cyan: #38bdf8;
+      --text: #94a3b8;
+      --bright: #e2e8f0;
+      --discord: #5865f2;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* NAV */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      height: 58px;
+      background: rgba(7,16,31,0.97);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(8px);
+    }
+
+    .nav-logo {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--bright);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .nav-logo em {
+      color: var(--cyan);
+      font-style: normal;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .nav-links a {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--text);
+      text-decoration: none;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .nav-links a:hover { background: rgba(255,255,255,0.05); color: var(--bright); }
+    .nav-links a.active { color: var(--cyan); background: rgba(56,189,248,0.07); }
+
+    .nav-links a svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+    .discord-nav {
+      margin-left: 8px;
+      background: rgba(88,101,242,0.1) !important;
+      color: #a5b4fc !important;
+      border: 1px solid rgba(88,101,242,0.18);
+    }
+    .discord-nav:hover { background: rgba(88,101,242,0.18) !important; color: #c7d2fe !important; }
+
+    /* PAGES */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* HOME */
+    .home-wrap {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 72px 40px 0;
+    }
+
+    .home-wrap h1 {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: clamp(2.6rem, 7vw, 4.2rem);
+      font-weight: 700;
+      color: var(--bright);
+      line-height: 1;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-bottom: 18px;
+    }
+
+    .home-wrap h1 span { color: var(--cyan); }
+
+    .home-wrap p {
+      font-size: 0.93rem;
+      line-height: 1.8;
+      color: var(--text);
+      max-width: 500px;
+      margin-bottom: 32px;
+    }
+
+    .hero-btns { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 64px; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 10px 20px;
+      border-radius: 7px;
+      font-size: 0.83rem;
+      font-weight: 500;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s;
+    }
+
+    .btn svg { width: 14px; height: 14px; }
+
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary:hover { background: var(--accent-dim); transform: translateY(-1px); }
+
+    .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    .btn-ghost:hover { border-color: #2a4a70; color: var(--bright); background: rgba(255,255,255,0.03); }
+
+    .divider { height: 1px; background: var(--border); }
+
+    .stats {
+      display: flex;
+      padding: 32px 0;
+      gap: 40px;
+    }
+
+    .stat-val {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--bright);
+      letter-spacing: 0.02em;
+    }
+
+    .stat-label {
+      font-size: 0.73rem;
+      color: var(--text);
+      margin-top: 2px;
+    }
+
+    /* DOWNLOAD */
+    .inner {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 60px 40px;
+    }
+
+    .inner h2 {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--bright);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 4px;
+    }
+
+    .inner .sub {
+      font-size: 0.8rem;
+      color: var(--text);
+      margin-bottom: 32px;
+    }
+
+    .dl-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .dl-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 22px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      gap: 16px;
+      transition: border-color 0.15s;
+    }
+
+    .dl-row:hover { border-color: #253e62; }
+
+    .dl-left { display: flex; align-items: center; gap: 14px; }
+
+    .dl-icon {
+      width: 38px; height: 38px;
+      background: rgba(37,99,235,0.08);
+      border: 1px solid rgba(37,99,235,0.18);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .dl-title { font-size: 0.88rem; font-weight: 500; color: var(--bright); margin-bottom: 2px; }
+    .dl-sub { font-size: 0.73rem; color: var(--text); }
+
+    .dl-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: var(--accent);
+      color: white;
+      font-size: 0.78rem;
+      font-weight: 500;
+      text-decoration: none;
+      border-radius: 6px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: background 0.15s, transform 0.15s;
+    }
+
+    .dl-btn:hover { background: var(--accent-dim); transform: translateY(-1px); }
+    .dl-btn svg { width: 12px; height: 12px; }
+
+    .note {
+      margin-top: 20px;
+      padding: 14px 18px;
+      background: rgba(56,189,248,0.04);
+      border: 1px solid rgba(56,189,248,0.1);
+      border-radius: 7px;
+      font-size: 0.78rem;
+      color: var(--text);
+      line-height: 1.65;
+    }
+
+    .note strong { color: var(--cyan); font-weight: 500; }
+
+    /* DISCORD */
+    .dc-card {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding: 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      margin-bottom: 10px;
+    }
+
+    .dc-logo {
+      width: 48px; height: 48px;
+      background: rgba(88,101,242,0.12);
+      border: 1px solid rgba(88,101,242,0.25);
+      border-radius: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .dc-logo svg { width: 24px; height: 24px; fill: #7289da; }
+
+    .dc-info { flex: 1; }
+    .dc-info h3 { font-size: 0.9rem; font-weight: 500; color: var(--bright); margin-bottom: 3px; }
+    .dc-info p { font-size: 0.75rem; color: var(--text); }
+
+    .dc-join {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 18px;
+      background: #5865f2;
+      color: white;
+      font-size: 0.8rem;
+      font-weight: 500;
+      text-decoration: none;
+      border-radius: 7px;
+      flex-shrink: 0;
+      transition: background 0.15s, transform 0.15s;
+    }
+
+    .dc-join:hover { background: #4752c4; transform: translateY(-1px); }
+    .dc-join svg { width: 13px; height: 13px; fill: white; }
+
+    .dc-feats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .dc-feat {
+      padding: 12px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      font-size: 0.77rem;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .dc-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--cyan); flex-shrink: 0; }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 18px 40px;
+      font-size: 0.7rem;
+      color: #2d4057;
+      max-width: 680px;
+      margin: 40px auto 0;
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-logo">Layout<em>GDPS</em></div>
+    <div class="nav-links">
+      <a href="#" class="active" onclick="return showPage('home',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Home
+      </a>
+      <a href="#" onclick="return showPage('download',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download
+      </a>
+      <a href="https://discord.gg/ftFD6qF7wt" target="_blank" class="discord-nav">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0 12.64 12.64 0 00-.617-1.25.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 00-.041-.106 13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128 10.2 10.2 0 00.372-.292.074.074 0 01.077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 01.078.01c.12.098.246.198.373.292a.077.077 0 01-.006.127 12.299 12.299 0 01-1.873.892.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.839 19.839 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.03z"/></svg>
+        Discord
+      </a>
+    </div>
+  </nav>
+
+  <!-- HOME -->
+  <div class="page active" id="page-home">
+    <div class="home-wrap">
+      <h1>Layout<br/><span>GDPS</span></h1>
+      <p>A geometry dash private server (GDPS) that is mainly focused on layouts, upload your layouts and add some effects if you want to!</p>
+      <div class="hero-btns">
+        <a href="#" class="btn btn-primary" onclick="return showPage('download', document.querySelectorAll('.nav-links a')[1])">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download
+        </a>
+        <a href="https://discord.gg/ftFD6qF7wt" target="_blank" class="btn btn-ghost">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0 12.64 12.64 0 00-.617-1.25.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 00-.041-.106 13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128 10.2 10.2 0 00.372-.292.074.074 0 01.077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 01.078.01c.12.098.246.198.373.292a.077.077 0 01-.006.127 12.299 12.299 0 01-1.873.892.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.839 19.839 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.03z"/></svg>
+          Discord
+        </a>
+      </div>
+      <div class="divider"></div>
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-val">Free</div>
+          <div class="stat-label">Always free to play</div>
+        </div>
+        <div class="stat">
+          <div class="stat-val">PC + Android</div>
+          <div class="stat-label">Both platforms supported</div>
+        </div>
+        <div class="stat">
+          <div class="stat-val">Layouts</div>
+          <div class="stat-label">Layout focused server</div>
+        </div>
+      </div>
+    </div>
+    <footer>&copy; 2026 LayoutGDPS &mdash; Not affiliated with RobTop Games</footer>
+  </div>
+
+  <!-- DOWNLOAD -->
+  <div class="page" id="page-download">
+    <div class="inner">
+      <h2>Download</h2>
+      <p class="sub">Pick your platform and get playing.</p>
+      <div class="dl-list">
+        <div class="dl-row">
+          <div class="dl-left">
+            <div class="dl-icon">🖥️</div>
+            <div>
+              <div class="dl-title">Windows PC</div>
+              <div class="dl-sub">Zip Folder: extract and run</div>
+            </div>
+          </div>
+          <a class="dl-btn" href="https://download.fhgdps.com/ratedlayout/LayoutGDPS.zip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download
+          </a>
+        </div>
+        <div class="dl-row">
+          <div class="dl-left">
+            <div class="dl-icon">📱</div>
+            <div>
+              <div class="dl-title">Android APK</div>
+              <div class="dl-sub">Enable unknown sources before installing</div>
+            </div>
+          </div>
+          <a class="dl-btn" href="https://cdn.discordapp.com/attachments/1479239181153599660/1503526572555243520/LayoutGDPS.apk?ex=6a03abbd&is=6a025a3d&hm=15f557012dcefd3606b145b4ae42c121ba0ca5a4b38208eceab404ec923b9a95&">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download
+          </a>
+        </div>
+      </div>
+      <div class="note">
+        <strong>Android tip:</strong> Go to Settings → Security → turn on "Install unknown apps" for your browser, then open the APK you downloaded.
+      </div>
+    </div>
+  </div>
+
+  <!-- DISCORD -->
+  <div class="page" id="page-discord">
+    <div class="inner">
+      <h2>Discord</h2>
+      <p class="sub">Hang out and stay up to date.</p>
+      <div class="dc-card">
+        <div class="dc-logo">
+          <svg viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0 12.64 12.64 0 00-.617-1.25.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 00-.041-.106 13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128 10.2 10.2 0 00.372-.292.074.074 0 01.077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 01.078.01c.12.098.246.198.373.292a.077.077 0 01-.006.127 12.299 12.299 0 01-1.873.892.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.839 19.839 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.03z"/></svg>
+        </div>
+        <div class="dc-info">
+          <h3>LayoutGDPS Community</h3>
+          <p>discord.gg/ftFD6qF7wt</p>
+        </div>
+        <a href="https://discord.gg/ftFD6qF7wt" target="_blank" class="dc-join">
+          <svg viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0 12.64 12.64 0 00-.617-1.25.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 00-.041-.106 13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128 10.2 10.2 0 00.372-.292.074.074 0 01.077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 01.078.01c.12.098.246.198.373.292a.077.077 0 01-.006.127 12.299 12.299 0 01-1.873.892.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.839 19.839 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.03z"/></svg>
+          Join
+        </a>
+      </div>
+      <div class="dc-feats">
+        <div class="dc-feat"><span class="dc-dot"></span>Announcements</div>
+        <div class="dc-feat"><span class="dc-dot"></span>Level suggestions</div>
+        <div class="dc-feat"><span class="dc-dot"></span>Help & support</div>
+        <div class="dc-feat"><span class="dc-dot"></span>Community chat</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function showPage(id, el) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+      document.getElementById('page-' + id).classList.add('active');
+      if (el) el.classList.add('active');
+      return false;
+    }
+  </script>
+</body>
+</html>
