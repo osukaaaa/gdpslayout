@@ -3,106 +3,268 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zinc helper</title>
+<title>ZINC</title>
 <style>
   :root{
-    --bg:#18181b; --panel:#212125; --line:#3f3f46; --text:#e4e4e7; --muted:#a1a1aa;
-    --ok:#4ade80; --busy:#fbbf24; --err:#f87171;
+    --bg:#09090b; --panel:rgba(24,24,27,.96); --head1:#27272a; --head2:#1f1f22;
+    --line:#3f3f46; --line-soft:#27272a; --text:#e4e4e7; --white:#fafafa;
+    --muted:#a1a1aa; --dim:#71717a;
+    --busy:#fbbf24; --done:#4ade80; --err:#f87171;
   }
   *{box-sizing:border-box}
-  html,body{height:100%;margin:0}
+  html{-webkit-text-size-adjust:100%}
   body{
-    background:var(--bg);color:var(--text);
-    font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;
-    display:grid;place-items:center;padding:24px;
+    margin:0;min-height:100vh;display:grid;place-items:start center;padding:40px 16px 80px;
+    background:radial-gradient(1200px 600px at 70% -10%,#18181b 0%,var(--bg) 60%);
+    color:var(--text);font:15px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif;
   }
-  main{width:100%;max-width:440px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px}
-  h1{margin:0 0 4px;font-size:22px;font-weight:700}
-  p{margin:0 0 16px;color:var(--muted)}
-  .status{display:flex;align-items:center;gap:10px;font-weight:600}
-  .dot{width:12px;height:12px;border-radius:50%;background:var(--muted)}
-  .dot.ok{background:var(--ok);box-shadow:0 0 8px var(--ok)}
-  .dot.busy{background:var(--busy);box-shadow:0 0 8px var(--busy);animation:pulse 1s infinite}
-  .dot.err{background:var(--err);box-shadow:0 0 8px var(--err)}
-  dl{margin:18px 0 0;display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:14px}
-  dt{color:var(--muted)}
-  dd{margin:0;word-break:break-word}
-  @keyframes pulse{50%{opacity:.4}}
-  @media (prefers-reduced-motion:reduce){.dot.busy{animation:none}}
+  #panel{
+    width:780px;max-width:100%;background:var(--panel);border:1px solid var(--line);border-radius:16px;
+    box-shadow:0 20px 60px rgba(0,0,0,.55);overflow:hidden;
+    animation:rise .3s cubic-bezier(.2,.8,.2,1);
+  }
+  #head{
+    display:flex;align-items:center;gap:12px;padding:20px 24px;
+    background:linear-gradient(180deg,var(--head1),var(--head2));border-bottom:1px solid var(--line);
+  }
+  #dot{width:16px;height:16px;border-radius:50%;background:var(--muted);transition:background .3s,box-shadow .3s}
+  #dot.busy{background:var(--busy);box-shadow:0 0 10px var(--busy);animation:pulse 1s infinite}
+  #dot.done{background:var(--done);box-shadow:0 0 10px var(--done)}
+  #dot.err{background:var(--err);box-shadow:0 0 10px var(--err)}
+  #title{font-weight:700;font-size:26px;letter-spacing:.14em;color:var(--white);flex:1}
+  .btn{
+    background:transparent;border:2px solid var(--line);color:#d4d4d8;border-radius:12px;
+    padding:12px 22px;font:inherit;font-size:19px;font-weight:600;cursor:pointer;transition:all .18s ease;
+  }
+  .btn:hover:not(:disabled){background:var(--line);color:var(--white);transform:translateY(-1px)}
+  .btn:active:not(:disabled){transform:translateY(0) scale(.96)}
+  .btn:focus-visible,#drop:focus-visible,textarea:focus-visible{outline:2px solid var(--muted);outline-offset:2px}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .btn.go{border-color:var(--done);color:var(--done)}
+  .btn.go:hover:not(:disabled){background:var(--done);color:#09090b}
+
+  #input{padding:24px 30px}
+  #drop{
+    display:grid;place-items:center;gap:6px;text-align:center;min-height:170px;padding:20px;
+    border:2px dashed var(--line);border-radius:12px;cursor:pointer;color:var(--muted);
+    transition:border-color .18s,background .18s;
+  }
+  #drop:hover,#drop.over{border-color:var(--muted);background:rgba(255,255,255,.03)}
+  #drop b{font-size:22px;color:var(--white)}
+  #preview{display:none}
+  #preview img{display:block;max-width:100%;max-height:320px;margin:0 auto;border:1px solid var(--line);border-radius:10px;background:#fff}
+  #prow{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:10px;font-size:14px;color:var(--dim)}
+  #prow .btn{padding:6px 14px;font-size:15px;border-width:1px}
+  label{display:block;margin:18px 0 6px;font-size:14px;color:var(--muted)}
+  textarea{
+    width:100%;min-height:64px;resize:vertical;padding:10px 12px;font:inherit;color:var(--text);
+    background:#18181b;border:1px solid var(--line);border-radius:10px;
+  }
+  textarea::placeholder{color:var(--dim)}
+  #bar{display:flex;gap:12px;align-items:center;margin-top:18px;flex-wrap:wrap}
+  #status{font-size:15px;color:var(--muted)}
+  #status.err{color:var(--err)}
+
+  #out{display:none}
+  #answer{
+    padding:28px 30px;border-top:1px solid var(--line-soft);
+    font-size:40px;line-height:1.4;font-weight:700;color:var(--white);
+    white-space:pre-wrap;word-break:break-word;animation:fade .45s ease;
+  }
+  #answer.small{font-size:24px}
+  #workWrap{padding:0 30px 24px;animation:fade .45s ease}
+  details{font-size:14px;color:var(--muted)}
+  summary{cursor:pointer;padding:4px 0}
+  #working{margin-top:8px;white-space:pre-wrap;word-break:break-word;color:#d4d4d8;font-size:15px}
+  #foot{padding:12px 24px;font-size:13px;color:var(--dim);border-top:1px solid var(--line-soft)}
+
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  @keyframes rise{from{opacity:0;transform:translateY(-12px) scale(.97)}to{opacity:1;transform:none}}
+  @media (max-width:560px){
+    #head{padding:16px}#title{font-size:22px}#input{padding:18px}
+    #answer{font-size:30px;padding:22px 18px}#workWrap{padding:0 18px 20px}
+    .btn{font-size:16px;padding:10px 16px}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
-<main>
-  <h1>Zinc helper</h1>
-  <p>Keep this window open while you use Zinc.</p>
-  <div class="status"><span class="dot" id="dot"></span><span id="status">Starting…</span></div>
-  <dl>
-    <dt>Requests</dt><dd id="count">0</dd>
-    <dt>Last result</dt><dd id="last">none yet</dd>
-  </dl>
-</main>
+<div id="panel">
+  <div id="head">
+    <div id="dot"></div>
+    <div id="title">ZINC</div>
+    <button class="btn go" id="solve" type="button" disabled>Solve</button>
+  </div>
+
+  <div id="input">
+    <div id="drop" tabindex="0" role="button" aria-label="Add a screenshot of your question">
+      <b>Paste, drop or choose a screenshot</b>
+      <span>Press Ctrl+V (or Cmd+V) anywhere on this page</span>
+    </div>
+    <input id="file" type="file" accept="image/*" hidden>
+
+    <div id="preview">
+      <img id="previewImg" alt="Your question screenshot">
+      <div id="prow"><span id="fileInfo"></span><button class="btn" id="clear" type="button">Remove</button></div>
+    </div>
+
+    <label for="note">Extra info the screenshot doesn't show (optional)</label>
+    <textarea id="note" placeholder="e.g. this is part b, or round to 2 decimal places"></textarea>
+
+    <div id="bar"><span id="status" role="status" aria-live="polite"></span></div>
+  </div>
+
+  <div id="out">
+    <div id="answer"></div>
+    <div id="workWrap">
+      <details open>
+        <summary>Working</summary>
+        <div id="working"></div>
+      </details>
+    </div>
+  </div>
+
+  <div id="foot">AI can make mistakes. Check the working makes sense before you rely on the answer.</div>
+</div>
 
 <script>
 (() => {
   // ====== CONFIG ======
-  // Where your proxy lives. "/api" works if this page is served by the same Worker/server.
-  // If this file is on a separate static host, use the full proxy URL instead,
-  // e.g. "https://zinc-proxy.yourname.workers.dev/api"
-  const API_URL = "/api";
-  // Only pages from these sites may use the helper
-  const ALLOWED_SITES = ["educake.co.uk"];
+  // Your proxy (the Cloudflare Worker). The Groq key lives there, never on this page.
+  const API_URL = "https://zinc-proxy.yourname.workers.dev/api";
+  const VISION_MODEL = "qwen/qwen3.8-27b"; // fallback: "qwen/qwen3.6-27b"
+  const MAX_TOKENS = 1500;
   // ====================
 
-  const dot = document.getElementById("dot");
-  const statusEl = document.getElementById("status");
-  const countEl = document.getElementById("count");
-  const lastEl = document.getElementById("last");
-  let count = 0;
+  const $ = id => document.getElementById(id);
+  const dot = $("dot"), drop = $("drop"), fileIn = $("file"), preview = $("preview"), previewImg = $("previewImg");
+  const fileInfo = $("fileInfo"), note = $("note"), solveBtn = $("solve"), statusEl = $("status");
+  const out = $("out"), answerEl = $("answer"), workingEl = $("working");
+  let imageData = null;
 
-  const setStatus = (cls, text) => { dot.className = "dot " + cls; statusEl.textContent = text; };
-  const allowed = origin => {
+  const setStatus = (t, err) => { statusEl.textContent = t || ""; statusEl.className = err ? "err" : ""; };
+
+  // Shrink the picture so it uploads quickly and fits the model's size limit
+  async function prepare(file) {
+    const url = URL.createObjectURL(file);
     try {
-      const h = new URL(origin).hostname;
-      return ALLOWED_SITES.some(s => h === s || h.endsWith("." + s));
-    } catch (_) { return false; }
-  };
+      const im = new Image();
+      im.src = url;
+      await im.decode();
+      const max = 1600, s = Math.min(1, max / Math.max(im.naturalWidth, im.naturalHeight));
+      const c = document.createElement("canvas");
+      c.width = Math.round(im.naturalWidth * s);
+      c.height = Math.round(im.naturalHeight * s);
+      const ctx = c.getContext("2d");
+      ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, c.width, c.height);
+      ctx.drawImage(im, 0, 0, c.width, c.height);
+      return c.toDataURL("image/jpeg", 0.85);
+    } finally { URL.revokeObjectURL(url); }
+  }
 
-  window.addEventListener("message", async e => {
-    if (!allowed(e.origin)) return;
-    const m = e.data;
-    if (!m || m.type !== "zinc-ask") return;
+  async function setImage(file) {
+    if (!file || !file.type.startsWith("image/")) { dot.className = "err"; setStatus("That file isn't an image.", true); return; }
+    try {
+      imageData = await prepare(file);
+    } catch (e) {
+      dot.className = "err";
+      setStatus("Couldn't read that image. Try a PNG or JPG.", true);
+      return;
+    }
+    previewImg.src = imageData;
+    fileInfo.textContent = file.name && file.name !== "image.png" ? file.name : "Pasted screenshot";
+    preview.style.display = "block";
+    drop.style.display = "none";
+    solveBtn.disabled = false;
+    out.style.display = "none";
+    dot.className = "";
+    setStatus("");
+  }
 
-    const reply = msg => e.source.postMessage({ type: "zinc-answer", id: m.id, ...msg }, e.origin);
-    setStatus("busy", "Asking the AI…");
-    count++;
-    countEl.textContent = count;
+  function clearImage() {
+    imageData = null;
+    preview.style.display = "none";
+    drop.style.display = "grid";
+    solveBtn.disabled = true;
+    fileIn.value = "";
+    dot.className = "";
+    setStatus("");
+  }
 
+  drop.addEventListener("click", () => fileIn.click());
+  drop.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileIn.click(); } });
+  fileIn.addEventListener("change", () => setImage(fileIn.files[0]));
+  $("clear").addEventListener("click", clearImage);
+
+  ["dragenter", "dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
+  ["dragleave", "drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
+  drop.addEventListener("drop", e => setImage(e.dataTransfer.files[0]));
+
+  document.addEventListener("paste", e => {
+    if (document.activeElement === note) return;
+    const item = [...(e.clipboardData?.items || [])].find(i => i.type.startsWith("image/"));
+    if (item) { e.preventDefault(); setImage(item.getAsFile()); }
+  });
+
+  const SYSTEM =
+    "You are a patient UK GCSE-level maths and science tutor. The student sends a screenshot of one question. " +
+    "Read it carefully, including any diagram, graph or table. Ignore anything that isn't part of the question. " +
+    "Never invent numbers: use only what the screenshot or the student's note shows. " +
+    "If a needed value is missing or unreadable, say what is missing, then end with 'ANSWER: MISSING INFO'. " +
+    "Otherwise give short, clear working in plain text (no LaTeX, no markdown), one step per line, naming the method used so the student can learn it. " +
+    "Check the arithmetic and units. Finish with a final line starting with 'ANSWER:' followed only by the final answer " +
+    "for each part (for example 'ANSWER: a) increase  b) 12'). Round only if the question says so.";
+
+  solveBtn.addEventListener("click", async () => {
+    if (!imageData) return;
+    solveBtn.disabled = true;
+    out.style.display = "none";
+    dot.className = "busy";
+    setStatus("Reading the question…");
+
+    const text = "Here is my question." + (note.value.trim() ? "\n\nExtra info: " + note.value.trim() : "");
     try {
       const r = await fetch(API_URL, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify(m.payload),
+        body: JSON.stringify({
+          model: VISION_MODEL,
+          temperature: 0.1,
+          max_tokens: MAX_TOKENS,
+          messages: [
+            { role: "system", content: SYSTEM },
+            { role: "user", content: [
+              { type: "text", text },
+              { type: "image_url", image_url: { url: imageData } },
+            ] },
+          ],
+        }),
       });
       const data = await r.json();
-      lastEl.textContent = r.ok ? "answered" : "error " + r.status + ": " + (data?.error?.message || "unknown");
-      setStatus(r.ok ? "ok" : "err", r.ok ? "Ready" : "Last request failed");
-      reply({ ok: r.ok, data });
+      if (!r.ok) {
+        const msg = data?.error?.message || r.statusText;
+        throw new Error(r.status === 429 ? "Too many people are using this right now. Wait a minute and try again." : msg);
+      }
+      const full = (data.choices[0].message.content || "").replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+      const i = full.lastIndexOf("ANSWER:");
+      const answer = (i >= 0 ? full.slice(i + 7) : "").trim();
+      const working = (i >= 0 ? full.slice(0, i) : full).trim();
+
+      answerEl.className = answer && answer.length < 60 ? "" : "small";
+      answerEl.textContent = answer || "No final answer returned. See the working below.";
+      workingEl.textContent = working || "(no working returned)";
+      out.style.display = "block";
+      dot.className = "done";
+      setStatus("");
+      out.scrollIntoView({ behavior: "smooth", block: "start" });
     } catch (err) {
-      const msg = String(err.message || err);
-      lastEl.textContent = "network error: " + msg;
-      setStatus("err", "Can't reach the proxy");
-      reply({ ok: false, data: { error: { message: "Helper couldn't reach the proxy (" + msg + ")" } } });
+      dot.className = "err";
+      setStatus(err instanceof TypeError ? "Couldn't reach the server. Check your connection and try again." : err.message, true);
+    } finally {
+      solveBtn.disabled = false;
     }
   });
-
-  // Tell the Educake page we're ready (works as a hidden frame or as a popup window)
-  const parentWin = window.opener || (window.parent !== window ? window.parent : null);
-  if (parentWin) {
-    parentWin.postMessage({ type: "zinc-ready" }, "*");
-    setStatus("ok", "Ready");
-  } else {
-    setStatus("err", "Open this page from Zinc's Connect button");
-  }
 })();
 </script>
 </body>
