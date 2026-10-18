@@ -95,9 +95,10 @@
     }
   });
 
-  // Tell the Educake tab we're ready
-  if (window.opener) {
-    window.opener.postMessage({ type: "zinc-ready" }, "*");
+  // Tell the Educake page we're ready (works as a hidden frame or as a popup window)
+  const parentWin = window.opener || (window.parent !== window ? window.parent : null);
+  if (parentWin) {
+    parentWin.postMessage({ type: "zinc-ready" }, "*");
     setStatus("ok", "Ready");
   } else {
     setStatus("err", "Open this page from Zinc's Connect button");
