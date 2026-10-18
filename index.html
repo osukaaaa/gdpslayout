@@ -1,1 +1,108 @@
-unrawunrawunraw
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zinc helper</title>
+<style>
+  :root{
+    --bg:#18181b; --panel:#212125; --line:#3f3f46; --text:#e4e4e7; --muted:#a1a1aa;
+    --ok:#4ade80; --busy:#fbbf24; --err:#f87171;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{
+    background:var(--bg);color:var(--text);
+    font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;
+    display:grid;place-items:center;padding:24px;
+  }
+  main{width:100%;max-width:440px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px}
+  h1{margin:0 0 4px;font-size:22px;font-weight:700}
+  p{margin:0 0 16px;color:var(--muted)}
+  .status{display:flex;align-items:center;gap:10px;font-weight:600}
+  .dot{width:12px;height:12px;border-radius:50%;background:var(--muted)}
+  .dot.ok{background:var(--ok);box-shadow:0 0 8px var(--ok)}
+  .dot.busy{background:var(--busy);box-shadow:0 0 8px var(--busy);animation:pulse 1s infinite}
+  .dot.err{background:var(--err);box-shadow:0 0 8px var(--err)}
+  dl{margin:18px 0 0;display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:14px}
+  dt{color:var(--muted)}
+  dd{margin:0;word-break:break-word}
+  @keyframes pulse{50%{opacity:.4}}
+  @media (prefers-reduced-motion:reduce){.dot.busy{animation:none}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Zinc helper</h1>
+  <p>Keep this window open while you use Zinc.</p>
+  <div class="status"><span class="dot" id="dot"></span><span id="status">Starting…</span></div>
+  <dl>
+    <dt>Requests</dt><dd id="count">0</dd>
+    <dt>Last result</dt><dd id="last">none yet</dd>
+  </dl>
+</main>
+
+<script>
+(() => {
+  // ====== CONFIG ======
+  // Where your proxy lives. "/api" works if this page is served by the same Worker/server.
+  // If this file is on a separate static host, use the full proxy URL instead,
+  // e.g. "https://zinc-proxy.yourname.workers.dev/api"
+  const API_URL = "/api";
+  // Only pages from these sites may use the helper
+  const ALLOWED_SITES = ["educake.co.uk"];
+  // ====================
+
+  const dot = document.getElementById("dot");
+  const statusEl = document.getElementById("status");
+  const countEl = document.getElementById("count");
+  const lastEl = document.getElementById("last");
+  let count = 0;
+
+  const setStatus = (cls, text) => { dot.className = "dot " + cls; statusEl.textContent = text; };
+  const allowed = origin => {
+    try {
+      const h = new URL(origin).hostname;
+      return ALLOWED_SITES.some(s => h === s || h.endsWith("." + s));
+    } catch (_) { return false; }
+  };
+
+  window.addEventListener("message", async e => {
+    if (!allowed(e.origin)) return;
+    const m = e.data;
+    if (!m || m.type !== "zinc-ask") return;
+
+    const reply = msg => e.source.postMessage({ type: "zinc-answer", id: m.id, ...msg }, e.origin);
+    setStatus("busy", "Asking the AI…");
+    count++;
+    countEl.textContent = count;
+
+    try {
+      const r = await fetch(API_URL, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(m.payload),
+      });
+      const data = await r.json();
+      lastEl.textContent = r.ok ? "answered" : "error " + r.status + ": " + (data?.error?.message || "unknown");
+      setStatus(r.ok ? "ok" : "err", r.ok ? "Ready" : "Last request failed");
+      reply({ ok: r.ok, data });
+    } catch (err) {
+      const msg = String(err.message || err);
+      lastEl.textContent = "network error: " + msg;
+      setStatus("err", "Can't reach the proxy");
+      reply({ ok: false, data: { error: { message: "Helper couldn't reach the proxy (" + msg + ")" } } });
+    }
+  });
+
+  // Tell the Educake tab we're ready
+  if (window.opener) {
+    window.opener.postMessage({ type: "zinc-ready" }, "*");
+    setStatus("ok", "Ready");
+  } else {
+    setStatus("err", "Open this page from Zinc's Connect button");
+  }
+})();
+</script>
+</body>
+</html>
